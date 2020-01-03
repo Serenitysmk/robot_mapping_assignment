@@ -21,7 +21,10 @@ lambda = scale - n;
 % TODO: Transform all sigma points according to the odometry command
 % Remember to vectorize your operations and normalize angles
 % Tip: the function normalize_angle also works on a vector (row) of angles
-
+sigma_points(1,:) = sigma_points(1,:) + u.t * cos(sigma_points(3,:) + u.r1);
+sigma_points(2,:) = sigma_points(2,:) + u.t * sin(sigma_points(3,:) + u.r1);
+sigma_points(3,:) = sigma_points(3,:) + u.r1 + u.r2;
+simga_points(3,:) = normalize_angle(sigma_points(3,:));
 
 % Computing the weights for recovering the mean
 wm = [lambda/scale, repmat(1/(2*scale),1,2*n)];
@@ -30,9 +33,19 @@ wc = wm;
 % TODO: recover mu.
 % Be careful when computing the robot's orientation (sum up the sines and
 % cosines and recover the 'average' angle via atan2)
-
+mu = sigma_points * wm' ;
+x_bar = wm * cos(sigma_points(3,:))';
+y_bar = wm * sin(sigma_points(3,:))'; 
+mu(3) = normalize_angle(atan2(y_bar , x_bar));
 
 % TODO: Recover sigma. Again, normalize the angular difference
+sigma_old = sigma;
+sigma = zeros(size(sigma_old));
+for i = 1 : (2 * n + 1)
+  diff = sigma_points(:,i) - mu;
+  diff(3) = normalize_angle(diff(3));
+  sigma = sigma + wc(i) * diff * diff';
+endfor
 
 
 % Motion noise
@@ -44,6 +57,5 @@ R = zeros(size(sigma,1));
 R(1:3,1:3) = R3;
 
 % TODO: Add motion noise to sigma
-
-
+sigma = sigma + R;
 end
