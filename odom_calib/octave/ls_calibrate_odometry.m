@@ -13,7 +13,8 @@ function X = ls_calibrate_odometry(Z)
  
   % TODO: initialize H and b of the linear system
   H = zeros(9,9);
-  b = zeros(1,9);
+  b = zeros(9,1);
+  omega = eye(3);
   
   % TODO: loop through the measurements and update H and b
   % You may call the functions error_function and jacobian, see below
@@ -22,15 +23,13 @@ function X = ls_calibrate_odometry(Z)
   for i = 1 : m
     e = error_function(i,X,Z);
     J = jacobian(i,Z);
-    b = b + e' * J;
-    H = H + J' * J;
+    b = b + J' * omega' * e;
+    H = H + J' * omega* J;
   endfor
 
   % TODO: solve and update the solution
-  L = chol(H);
-  y = -b / L;
-  x = y / L';
-  X = reshape(x , 3,3);
+  delX = -H\b;
+  X = X + [delX(1:3)';delX(4:6)';delX(7:9)'];
 end
 
 % this function computes the error of the i^th measurement in Z
@@ -54,12 +53,12 @@ end
 % J:	the jacobian of the ith measurement
 function J = jacobian(i, Z)
   % TODO compute the Jacobian
-  Z_m = Z(i,4:6);
-  x = Z_m(1);
-  y = Z_m(2);
-  theta = Z_m(3);
+  x = Z(i,4);
+  y = Z(i,5);
+  theta = Z(i,6);
   J = zeros(3 , 9);
   J(1, 1:3) = [x , y , theta];
   J(2, 4:6) = [x , y , theta];
   J(3, 7:9) = [x , y , theta];
+  J = -J;
 end

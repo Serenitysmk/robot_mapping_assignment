@@ -6,5 +6,6 @@
 
 function C = apply_odometry_correction(X, U)
   % TODO: compute the calibrated motion vector, try to vectorize
-  C = U * X;
+  C =  X * U';
+  C = C';
 end
